@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Standalone TriviaCraft quiz export for static hosting."
+    />
+    <title>Rajes Birthday</title>
+    <style>
+      :root {
+        --bg: #f4efe4;
+        --panel: rgba(255, 252, 245, 0.82);
+        --panel-strong: #fffdf7;
+        --text: #201815;
+        --muted: #6e625d;
+        --line: rgba(68, 49, 41, 0.12);
+        --accent: #d55d3e;
+        --accent-soft: #ffe4c9;
+        --accent-deep: #8b3425;
+        --success: #1f7a4f;
+        --warning: #9c5b17;
+        --danger: #a2382a;
+        --shadow: 0 24px 60px rgba(81, 55, 39, 0.14);
+        --radius-xl: 28px;
+        --radius-lg: 18px;
+        --radius-sm: 12px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        font-family: ui-rounded, "Avenir Next", "Trebuchet MS", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top left, rgba(255, 208, 166, 0.78), transparent 32%),
+          radial-gradient(circle at top right, rgba(231, 111, 81, 0.18), transparent 24%),
+          linear-gradient(180deg, #fbf4e9 0%, var(--bg) 100%);
+      }
+
+      body::before,
+      body::after {
+        content: "";
+        position: fixed;
+        inset: auto;
+        pointer-events: none;
+        z-index: 0;
+        border-radius: 999px;
+        filter: blur(8px);
+      }
+
+      body::before {
+        top: 4rem;
+        right: -4rem;
+        width: 18rem;
+        height: 18rem;
+        background: rgba(213, 93, 62, 0.18);
+      }
+
+      body::after {
+        bottom: 2rem;
+        left: -3rem;
+        width: 14rem;
+        height: 14rem;
+        background: rgba(255, 219, 169, 0.4);
+      }
+
+      button,
+      input,
+      textarea {
+        font: inherit;
+      }
+
+      .shell {
+        position: relative;
+        z-index: 1;
+        width: min(960px, calc(100% - 2rem));
+        margin: 0 auto;
+        padding: 2rem 0 4rem;
+      }
+
+      .hero {
+        margin-top: 1rem;
+        padding: 2rem;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-xl);
+        background: linear-gradient(145deg, rgba(255, 249, 240, 0.95), rgba(255, 244, 230, 0.8));
+        box-shadow: var(--shadow);
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.65);
+        color: var(--accent-deep);
+        font-size: 0.78rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .hero h1,
+      .card h2,
+      .summary-title {
+        margin: 0;
+        font-family: Georgia, "Iowan Old Style", serif;
+        line-height: 1.05;
+      }
+
+      .hero h1 {
+        margin-top: 1rem;
+        font-size: clamp(2.2rem, 5vw, 4.25rem);
+      }
+
+      .hero p {
+        max-width: 60ch;
+        margin: 1rem 0 0;
+        color: var(--muted);
+        font-size: 1.02rem;
+        line-height: 1.65;
+      }
+
+      .meta-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+      }
+
+      .meta-chip,
+      .status-pill,
+      .summary-item,
+      .feedback,
+      .empty-state,
+      .footer-note,
+      .card {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        backdrop-filter: blur(14px);
+      }
+
+      .meta-chip {
+        padding: 0.9rem 1rem;
+        border-radius: var(--radius-sm);
+      }
+
+      .meta-label {
+        display: block;
+        color: var(--muted);
+        font-size: 0.74rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .meta-value {
+        display: block;
+        margin-top: 0.3rem;
+        font-weight: 700;
+      }
+
+      .layout {
+        display: grid;
+        gap: 1.25rem;
+        margin-top: 1.5rem;
+      }
+
+      .card {
+        padding: 1.5rem;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow);
+      }
+
+      .progress-row,
+      .nav-row,
+      .choice,
+      .summary-head,
+      .footer-note {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      .progress-row {
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .progress-bar {
+        height: 0.7rem;
+        overflow: hidden;
+        margin-top: 0.85rem;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.06);
+      }
+
+      .progress-bar > span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #e28d59, var(--accent));
+        transition: width 180ms ease;
+      }
+
+      .prompt {
+        margin: 1rem 0 0;
+        font-size: clamp(1.3rem, 3vw, 2rem);
+      }
+
+      .subtle {
+        color: var(--muted);
+      }
+
+      .answer-group {
+        display: grid;
+        gap: 0.85rem;
+        margin-top: 1.25rem;
+      }
+
+      .choice {
+        align-items: flex-start;
+        padding: 0.95rem 1rem;
+        border: 1px solid rgba(68, 49, 41, 0.12);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.72);
+      }
+
+      .choice input {
+        margin-top: 0.15rem;
+        accent-color: var(--accent);
+      }
+
+      .choice.correct {
+        border-color: rgba(31, 122, 79, 0.28);
+        background: rgba(31, 122, 79, 0.08);
+      }
+
+      .choice.selected {
+        box-shadow: inset 0 0 0 1px rgba(213, 93, 62, 0.24);
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 140px;
+        padding: 1rem;
+        resize: vertical;
+        border: 1px solid rgba(68, 49, 41, 0.18);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.9);
+        color: var(--text);
+      }
+
+      textarea:focus,
+      button:focus-visible,
+      input:focus-visible {
+        outline: 3px solid rgba(213, 93, 62, 0.24);
+        outline-offset: 2px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 999px;
+        padding: 0.85rem 1.15rem;
+        cursor: pointer;
+        transition: transform 120ms ease, opacity 120ms ease, background 120ms ease;
+      }
+
+      button:hover:not(:disabled) {
+        transform: translateY(-1px);
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.48;
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: #fff8ef;
+      }
+
+      .btn-secondary {
+        background: rgba(255, 255, 255, 0.82);
+        color: var(--text);
+      }
+
+      .btn-link {
+        background: transparent;
+        color: var(--muted);
+        padding-left: 0;
+      }
+
+      .feedback {
+        margin-top: 1.25rem;
+        padding: 1rem;
+        border-radius: 16px;
+      }
+
+      .feedback.correct {
+        border-color: rgba(31, 122, 79, 0.28);
+        background: rgba(31, 122, 79, 0.08);
+      }
+
+      .feedback.incorrect {
+        border-color: rgba(162, 56, 42, 0.24);
+        background: rgba(162, 56, 42, 0.08);
+      }
+
+      .feedback.manual {
+        border-color: rgba(156, 91, 23, 0.24);
+        background: rgba(156, 91, 23, 0.08);
+      }
+
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.35rem 0.65rem;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .status-pill.correct {
+        color: var(--success);
+      }
+
+      .status-pill.incorrect {
+        color: var(--danger);
+      }
+
+      .status-pill.manual {
+        color: var(--warning);
+      }
+
+      .nav-row {
+        margin-top: 1.5rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid var(--line);
+      }
+
+      .nav-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 0.75rem;
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.85rem;
+        margin-top: 1.25rem;
+      }
+
+      .summary-item {
+        display: grid;
+        gap: 0.35rem;
+        padding: 1rem;
+        border-radius: 16px;
+      }
+
+      .summary-list {
+        display: grid;
+        gap: 0.85rem;
+        margin-top: 1.25rem;
+      }
+
+      .summary-head {
+        align-items: flex-start;
+      }
+
+      .footer-note {
+        margin-top: 1rem;
+        padding: 0.85rem 1rem;
+        border-radius: 16px;
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+
+      .empty-state {
+        margin-top: 1.5rem;
+        padding: 1.5rem;
+        border-radius: var(--radius-lg);
+      }
+
+      .empty-state h2 {
+        margin: 0 0 0.35rem;
+        font-family: Georgia, "Iowan Old Style", serif;
+      }
+
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      @media (max-width: 720px) {
+        .shell {
+          width: min(100%, calc(100% - 1rem));
+          padding-bottom: 2rem;
+        }
+
+        .hero,
+        .card,
+        .empty-state {
+          padding: 1.1rem;
+        }
+
+        .progress-row,
+        .nav-row,
+        .summary-head,
+        .footer-note {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .nav-actions {
+          width: 100%;
+          justify-content: stretch;
+        }
+
+        .nav-actions button {
+          flex: 1 1 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script id="quiz-data" type="application/json">{"exportedAt":"2026-04-22T09:58:01.913Z","quiz":{"id":"01KPQN1257MEPCAM2N6K4ASA09","title":"Rajes Birthday","description":"Raje is turning 39 and we would like to celebrate like a true boring 39 year old and have a trivia quiz!","status":"published","updatedAt":1776768706438},"questions":[{"id":"01KPQPB40BPDWWJA7SXXDZGF1F","quizId":"01KPQN1257MEPCAM2N6K4ASA09","prompt":"ABBA famously created a string of worldwide hits, but which of their iconic songs—originally titled \"Boogaloo\"—became the only track by the group to hit number one on the US Billboard Hot 100?","points":1,"order":0,"createdAt":1776764162059,"updatedAt":1776768772111,"kind":"multiple_choice","options":[{"id":"01KPQPCEYAFGD2K9H1FNXQ7SKA","text":"Waterloo"},{"id":"01KPQPCMWNW1GTRST3S1A0TCTD","text":"Dancing Queen"},{"id":"01KPQPCS5JM7Q07WC1XNNQNQ9P","text":"Mamma Mia"},{"id":"01KPQPCXMAWEFGDSPV0EG9QBEC","text":"Take a Chance on Me"}],"correctOptionIds":["01KPQPCMWNW1GTRST3S1A0TCTD"],"answer":"While ABBA dominated charts across Europe and Australia, \"Dancing Queen\" was their sole chart-topper in the United States, reaching the #1 spot in 1977.","funFact":"Did you know?\nThe group’s name is an acronym of the first letters of their first names (Agnetha, Björn, Benny, and Anni-Frid). However, they had to negotiate for the rights to use it because Abba was already the name of a well-known Swedish canned fish company! The seafood brand reportedly told them, \"As long as you don't make us feel ashamed for what you're doing,\" they could keep the name."},{"id":"01KPQQA802ATJACRZKTDG103S3","quizId":"01KPQN1257MEPCAM2N6K4ASA09","prompt":"In Hong Kong’s iconic three-color taxi system, Urban Taxis (red) can travel almost anywhere, and Lantau Taxis (blue) are restricted to Lantau Island. However, which color taxi is designated specifically for the New Territories, and is legally prohibited from picking up passengers in central business districts like Central or Tsim Sha Tsui?","points":1,"order":1,"createdAt":1776765181954,"updatedAt":1776768780698,"kind":"multiple_choice","options":[{"id":"01KPQQARDPDQCR77M81BNSBR5E","text":"Green"},{"id":"01KPQRF0A4P5K0WTR6YE50BY4T","text":"Red"},{"id":"01KPQRF4DG1WNYT3849FT7N5MJ","text":"Blue"},{"id":"01KPQRFAR8K6TD7AM7C5YSQF10","text":"Pink"}],"correctOptionIds":["01KPQQARDPDQCR77M81BNSBR5E"],"answer":"Green taxis serve the New Territories. While they can drop passengers off at specific locations like the Airport or Disneyland, they generally operate north of the city's main urban hubs.","funFact":"The \"Double-Decker\" Challenge:\nBecause Hong Kong is so mountainous, engineers had to get creative. The Old Peak Road features gradients as steep as 1:4 (a 25% incline). To navigate these slopes and the city's narrow \"canyon\" streets, Hong Kong’s double-decker buses are custom-built with a lower center of gravity and a tighter turning radius than standard models to ensure they don't tip over while navigating the hair-pin turns of Hong Kong Island."},{"id":"01KPQS421XG106TM43XPH92S92","quizId":"01KPQN1257MEPCAM2N6K4ASA09","prompt":"Australia is credited with producing what is widely considered the world’s first-ever full-length feature film in 1906. What was the name of this ground-breaking movie?","points":1,"order":2,"createdAt":1776767076413,"updatedAt":1776768827964,"kind":"multiple_choice","options":[{"id":"01KPQS4F1HD2NH4MWSTH41A5C2","text":"The Man from Snowy River"},{"id":"01KPQS4PNHM7S3SFRSM6ACFTDE","text":"The Story of the Kelly Gang"},{"id":"01KPQS4XAKEBKE7RME2CXWSKGS","text":"Picnic at Hanging Rock"},{"id":"01KPQS52V6PCN386QKW3QECF0S","text":"Jedda"}],"correctOptionIds":["01KPQS4PNHM7S3SFRSM6ACFTDE"],"answer":"Released on Boxing Day in 1906, it ran for approximately 60–70 minutes. At a time when most movies were only a few minutes long, this was a massive technological and narrative leap","funFact":"The \"Croc\" Effect:\nWhen Crocodile Dundee was released in 1986, it became such a massive global phenomenon that it didn't just break box office records—it fundamentally changed Australian tourism forever. In the year following its US release, the number of American visitors to Australia doubled. It remains the highest-grossing Australian film of all time at the domestic box office, even when adjusted for modern blockbusters!"},{"id":"01KPQS5GQ31A0VR22RQEV18KSJ","quizId":"01KPQN1257MEPCAM2N6K4ASA09","prompt":"During its peak in the 1980s and early 1990s, the Hong Kong film industry was the third-largest in the world, trailing only Hollywood and Bollywood, earning it the nickname \"The Hollywood of the East.\"\n\nThe Trivia Question\nQuestion: During the \"Golden Age\" of Hong Kong cinema, a specific genre known as \"Heroic Bloodshed\" was pioneered by director John Woo and popularized by Chow Yun-fat. Which 1986 masterpiece—which almost wasn't made due to the director being considered \"washed up\" at the time—shattered box office records and defined the cool, trench-coat-wearing \"gun-fu\" aesthetic for a generation?","points":1,"order":3,"createdAt":1776767124195,"updatedAt":1776768834200,"kind":"multiple_choice","options":[{"id":"01KPQSAK9HTYXVKMAWHWC4M6XS","text":"Hard Boiled"},{"id":"01KPQSASQ8J20C3WAVAQXXNV0T","text":"A Better Tomorrow"},{"id":"01KPQSAYVBA78R0D0WJ7M03487","text":"The Killer"},{"id":"01KPQSB5H4VHHAEHFNQN3XV08V","text":"City on Fire"}],"correctOptionIds":["01KPQSASQ8J20C3WAVAQXXNV0T"],"answer":"While all the options are classics, A Better Tomorrow was the definitive turning point. It transformed Chow Yun-fat from a \"box office poison\" TV actor into a superstar and established the stylized, emotional brotherhood themes that would later influence Western directors like Quentin Tarantino and the Wachowskis.","funFact":"The \"Chungking\" Hustle:\nWong Kar-wai’s Chungking Express was actually made during a two-month \"break\" from his high-budget, exhausting martial arts epic Ashes of Time. He filmed it using a handheld camera and natural light to move quickly. Because they didn't always have permits, the crew—including cinematographer Christopher Doyle—often had to film scenes in the real Chungking Mansions and the Midnight Express deli as fast as possible before being chased away by security or local shop owners!"}]}</script>
+    <script>
+      (() => {
+        const payload = JSON.parse(document.getElementById('quiz-data').textContent || '{}');
+        const quiz = payload.quiz || {};
+        const questions = Array.isArray(payload.questions) ? payload.questions : [];
+        const exportedAt = payload.exportedAt || '';
+        const app = document.getElementById('app');
+
+        const state = {
+          index: 0,
+          finished: false,
+          attempts: {},
+        };
+
+        function escapeHtml(value) {
+          return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+        }
+
+        function formatDate(value) {
+          if (!value) return 'Unknown';
+          const date = new Date(value);
+          if (Number.isNaN(date.getTime())) return 'Unknown';
+          return date.toLocaleString();
+        }
+
+        function pointsLabel(points) {
+          return points === 1 ? '1 point' : points + ' points';
+        }
+
+        function normalizeAnswer(input) {
+          return String(input || '').trim().replace(/s+/g, ' ').toLowerCase();
+        }
+
+        function newAttempt(question) {
+          if (question.kind === 'multiple_choice') {
+            return { kind: 'multiple_choice', selectedOptionIds: [] };
+          }
+          if (question.kind === 'true_false') {
+            return { kind: 'true_false', value: null };
+          }
+          return { kind: 'open_ended', text: '' };
+        }
+
+        function ensureAttempt(question) {
+          if (!state.attempts[question.id]) {
+            state.attempts[question.id] = {
+              submitted: false,
+              attempt: newAttempt(question),
+            };
+          }
+          return state.attempts[question.id];
+        }
+
+        function gradeQuestion(question, attempt) {
+          if (question.kind === 'multiple_choice') {
+            const correct = new Set(question.correctOptionIds || []);
+            if (correct.size === 0) {
+              return { isCorrect: false, manual: true, score: 0, summary: 'manual' };
+            }
+            const selected = new Set(attempt.selectedOptionIds || []);
+            const matches =
+              selected.size === correct.size &&
+              Array.from(selected).every((id) => correct.has(id));
+            return {
+              isCorrect: matches,
+              manual: false,
+              score: matches ? question.points : 0,
+              summary: matches ? 'correct' : 'incorrect',
+            };
+          }
+
+          if (question.kind === 'true_false') {
+            if (attempt.value === null) {
+              return { isCorrect: false, manual: false, score: 0, summary: 'incorrect' };
+            }
+            const matches = attempt.value === question.correctBoolean;
+            return {
+              isCorrect: matches,
+              manual: false,
+              score: matches ? question.points : 0,
+              summary: matches ? 'correct' : 'incorrect',
+            };
+          }
+
+          const accepted = Array.isArray(question.acceptableAnswers)
+            ? question.acceptableAnswers
+            : [];
+          if (accepted.length === 0) {
+            return { isCorrect: false, manual: true, score: 0, summary: 'manual' };
+          }
+          const normalizedAttempt = normalizeAnswer(attempt.text);
+          if (!normalizedAttempt) {
+            return { isCorrect: false, manual: false, score: 0, summary: 'incorrect' };
+          }
+          const matches = accepted.some(
+            (candidate) => normalizeAnswer(candidate) === normalizedAttempt,
+          );
+          return {
+            isCorrect: matches,
+            manual: false,
+            score: matches ? question.points : 0,
+            summary: matches ? 'correct' : 'incorrect',
+          };
+        }
+
+        function canonicalAnswer(question) {
+          if (question.kind === 'multiple_choice') {
+            const correctIds = new Set(question.correctOptionIds || []);
+            const labels = (question.options || [])
+              .filter((option) => correctIds.has(option.id))
+              .map((option) => option.text)
+              .filter(Boolean);
+            return labels.length > 0 ? labels.join(', ') : question.answer || 'No correct answer authored';
+          }
+          if (question.kind === 'true_false') {
+            return question.correctBoolean ? 'True' : 'False';
+          }
+          if (question.answer) return question.answer;
+          const acceptable = Array.isArray(question.acceptableAnswers)
+            ? question.acceptableAnswers.filter(Boolean)
+            : [];
+          return acceptable.length > 0 ? acceptable.join(', ') : 'Manual review required';
+        }
+
+        function playerResponse(question, attempt) {
+          if (question.kind === 'multiple_choice') {
+            const chosen = new Set(attempt.selectedOptionIds || []);
+            const labels = (question.options || [])
+              .filter((option) => chosen.has(option.id))
+              .map((option) => option.text);
+            return labels.length > 0 ? labels.join(', ') : 'No option selected';
+          }
+          if (question.kind === 'true_false') {
+            if (attempt.value === null) return 'No answer submitted';
+            return attempt.value ? 'True' : 'False';
+          }
+          return attempt.text && attempt.text.trim() ? attempt.text.trim() : 'No answer submitted';
+        }
+
+        function summaryLabel(grade) {
+          if (grade.summary === 'correct') return 'Correct';
+          if (grade.summary === 'incorrect') return 'Incorrect';
+          return 'Manual check';
+        }
+
+        function renderChoice(question, option, attempt, submitted) {
+          const correctIds = new Set(question.correctOptionIds || []);
+          const checked = (attempt.selectedOptionIds || []).includes(option.id);
+          const classes = [
+            'choice',
+            checked ? 'selected' : '',
+            submitted && correctIds.has(option.id) ? 'correct' : '',
+          ]
+            .filter(Boolean)
+            .join(' ');
+
+          return '<label class="' + classes + '">' +
+            '<input type="checkbox" data-choice-id="' + escapeHtml(option.id) + '" ' +
+            (checked ? 'checked ' : '') +
+            (submitted ? 'disabled ' : '') + '/>' +
+            '<span>' + escapeHtml(option.text) + '</span>' +
+          '</label>';
+        }
+
+        function renderTrueFalse(attempt, submitted) {
+          return ['True', 'False']
+            .map((label, index) => {
+              const value = index === 0;
+              return '<label class="choice ' + (attempt.value === value ? 'selected' : '') + '">' +
+                '<input type="radio" name="true-false" data-tf-value="' + value + '" ' +
+                (attempt.value === value ? 'checked ' : '') +
+                (submitted ? 'disabled ' : '') + '/>' +
+                '<span>' + label + '</span>' +
+              '</label>';
+            })
+            .join('');
+        }
+
+        function renderFeedback(question, row) {
+          if (!row.submitted || !row.grade) return '';
+          const canonical = canonicalAnswer(question);
+          const fact = question.funFact ? '<p><strong>Fun fact:</strong> ' + escapeHtml(question.funFact) + '</p>' : '';
+          const answer = '<p><strong>Answer:</strong> ' + escapeHtml(canonical) + '</p>';
+          const player = '<p><strong>Your response:</strong> ' + escapeHtml(playerResponse(question, row.attempt)) + '</p>';
+          const score = row.grade.manual
+            ? '<p>This question needs a human check.</p>'
+            : '<p>Score for this question: <strong>' + escapeHtml(String(row.grade.score)) + '</strong> / ' + escapeHtml(String(question.points)) + '</p>';
+
+          return '<section class="feedback ' + escapeHtml(row.grade.summary) + '">' +
+            '<div class="summary-head">' +
+              '<strong>' + escapeHtml(summaryLabel(row.grade)) + '</strong>' +
+              '<span class="status-pill ' + escapeHtml(row.grade.summary) + '">' + escapeHtml(row.grade.summary) + '</span>' +
+            '</div>' +
+            player +
+            answer +
+            score +
+            fact +
+          '</section>';
+        }
+
+        function renderQuestion() {
+          if (questions.length === 0) {
+            app.innerHTML =
+              '<main class="shell">' +
+                '<section class="hero">' +
+                  '<span class="eyebrow">TriviaCraft export</span>' +
+                  '<h1>' + escapeHtml(quiz.title || 'Untitled quiz') + '</h1>' +
+                  '<p>' + escapeHtml(quiz.description || 'This export does not contain any questions yet.') + '</p>' +
+                '</section>' +
+                '<section class="empty-state">' +
+                  '<h2>No questions found</h2>' +
+                  '<p class="subtle">The quiz exported successfully, but there were no playable questions in it.</p>' +
+                '</section>' +
+              '</main>';
+            return;
+          }
+
+          const question = questions[state.index];
+          const row = ensureAttempt(question);
+          const progress = ((state.index + 1) / questions.length) * 100;
+          const heroDescription = quiz.description
+            ? escapeHtml(quiz.description)
+            : 'A standalone TriviaCraft export ready for static hosting.';
+
+          let answerMarkup = '';
+          if (question.kind === 'multiple_choice') {
+            answerMarkup = (question.options || [])
+              .map((option) => renderChoice(question, option, row.attempt, row.submitted))
+              .join('');
+          } else if (question.kind === 'true_false') {
+            answerMarkup = renderTrueFalse(row.attempt, row.submitted);
+          } else {
+            answerMarkup =
+              '<label>' +
+                '<span class="visually-hidden">Type your answer</span>' +
+                '<textarea data-open-ended ' + (row.submitted ? 'disabled' : '') + ' placeholder="Type your answer here">' +
+                  escapeHtml(row.attempt.text || '') +
+                '</textarea>' +
+              '</label>';
+          }
+
+          app.innerHTML =
+            '<main class="shell">' +
+              '<section class="hero">' +
+                '<span class="eyebrow">TriviaCraft static quiz</span>' +
+                '<h1>' + escapeHtml(quiz.title || 'Untitled quiz') + '</h1>' +
+                '<p>' + heroDescription + '</p>' +
+                '<div class="meta-grid">' +
+                  '<div class="meta-chip"><span class="meta-label">Questions</span><span class="meta-value">' + escapeHtml(String(questions.length)) + '</span></div>' +
+                  '<div class="meta-chip"><span class="meta-label">Status</span><span class="meta-value">' + escapeHtml(quiz.status || 'draft') + '</span></div>' +
+                  '<div class="meta-chip"><span class="meta-label">Updated</span><span class="meta-value">' + escapeHtml(formatDate(quiz.updatedAt)) + '</span></div>' +
+                '</div>' +
+              '</section>' +
+              '<section class="layout">' +
+                '<article class="card">' +
+                  '<div class="progress-row">' +
+                    '<span>Question ' + escapeHtml(String(state.index + 1)) + ' of ' + escapeHtml(String(questions.length)) + '</span>' +
+                    '<span>' + escapeHtml(pointsLabel(question.points)) + '</span>' +
+                  '</div>' +
+                  '<div class="progress-bar" aria-hidden="true"><span style="width: ' + progress.toFixed(2) + '%"></span></div>' +
+                  '<h2 class="prompt">' + escapeHtml(question.prompt) + '</h2>' +
+                  '<p class="subtle">' + escapeHtml(question.kind.replace(/_/g, ' ')) + '</p>' +
+                  '<div class="answer-group">' + answerMarkup + '</div>' +
+                  renderFeedback(question, row) +
+                  '<div class="nav-row">' +
+                    '<button class="btn-link" data-action="prev" ' + (state.index === 0 ? 'disabled' : '') + '>Previous</button>' +
+                    '<div class="nav-actions">' +
+                      (row.submitted
+                        ? '<button class="btn-secondary" data-action="retry">Try again</button>' +
+                          '<button class="btn-primary" data-action="next">' +
+                            (state.index + 1 === questions.length ? 'Finish quiz' : 'Next question') +
+                          '</button>'
+                        : '<button class="btn-primary" data-action="submit">Submit answer</button>') +
+                    '</div>' +
+                  '</div>' +
+                '</article>' +
+                '<div class="footer-note">' +
+                  '<span>Exported ' + escapeHtml(formatDate(exportedAt)) + '</span>' +
+                  '<span>Hosted without a server</span>' +
+                '</div>' +
+              '</section>' +
+            '</main>';
+
+          const prevButton = app.querySelector('[data-action="prev"]');
+          if (prevButton) {
+            prevButton.addEventListener('click', () => {
+              state.index = Math.max(0, state.index - 1);
+              render();
+            });
+          }
+
+          const submitButton = app.querySelector('[data-action="submit"]');
+          if (submitButton) {
+            submitButton.addEventListener('click', () => {
+              const nextRow = ensureAttempt(question);
+              nextRow.grade = gradeQuestion(question, nextRow.attempt);
+              nextRow.submitted = true;
+              render();
+            });
+          }
+
+          const retryButton = app.querySelector('[data-action="retry"]');
+          if (retryButton) {
+            retryButton.addEventListener('click', () => {
+              state.attempts[question.id] = {
+                submitted: false,
+                attempt: newAttempt(question),
+              };
+              render();
+            });
+          }
+
+          const nextButton = app.querySelector('[data-action="next"]');
+          if (nextButton) {
+            nextButton.addEventListener('click', () => {
+              if (state.index + 1 >= questions.length) {
+                state.finished = true;
+              } else {
+                state.index += 1;
+              }
+              render();
+            });
+          }
+
+          app.querySelectorAll('[data-choice-id]').forEach((input) => {
+            input.addEventListener('change', () => {
+              const choiceIds = Array.from(app.querySelectorAll('[data-choice-id]:checked')).map(
+                (element) => element.getAttribute('data-choice-id'),
+              );
+              state.attempts[question.id] = {
+                submitted: false,
+                attempt: {
+                  kind: 'multiple_choice',
+                  selectedOptionIds: choiceIds.filter(Boolean),
+                },
+              };
+            });
+          });
+
+          app.querySelectorAll('[data-tf-value]').forEach((input) => {
+            input.addEventListener('change', () => {
+              const raw = input.getAttribute('data-tf-value');
+              state.attempts[question.id] = {
+                submitted: false,
+                attempt: {
+                  kind: 'true_false',
+                  value: raw === 'true',
+                },
+              };
+            });
+          });
+
+          const openEnded = app.querySelector('[data-open-ended]');
+          if (openEnded) {
+            openEnded.addEventListener('input', (event) => {
+              state.attempts[question.id] = {
+                submitted: false,
+                attempt: {
+                  kind: 'open_ended',
+                  text: event.target.value,
+                },
+              };
+            });
+          }
+        }
+
+        function renderSummary() {
+          const attempts = questions.map((question) => ({
+            question,
+            row: ensureAttempt(question),
+          }));
+          const totalScore = attempts.reduce(
+            (sum, entry) => sum + (entry.row.grade ? entry.row.grade.score : 0),
+            0,
+          );
+          const maxScore = questions.reduce((sum, question) => sum + question.points, 0);
+          const correctAnswers = attempts.filter(
+            (entry) => entry.row.grade && entry.row.grade.summary === 'correct',
+          ).length;
+          const manualChecks = attempts.filter(
+            (entry) => entry.row.grade && entry.row.grade.summary === 'manual',
+          ).length;
+
+          app.innerHTML =
+            '<main class="shell">' +
+              '<section class="hero">' +
+                '<span class="eyebrow">Quiz complete</span>' +
+                '<h1>' + escapeHtml(quiz.title || 'Untitled quiz') + '</h1>' +
+                '<p>' + escapeHtml(quiz.description || 'Your score summary is ready.') + '</p>' +
+                '<div class="summary-grid">' +
+                  '<div class="summary-item"><span class="meta-label">Score</span><strong>' + escapeHtml(String(totalScore)) + ' / ' + escapeHtml(String(maxScore)) + '</strong></div>' +
+                  '<div class="summary-item"><span class="meta-label">Correct</span><strong>' + escapeHtml(String(correctAnswers)) + ' of ' + escapeHtml(String(questions.length)) + '</strong></div>' +
+                  '<div class="summary-item"><span class="meta-label">Manual checks</span><strong>' + escapeHtml(String(manualChecks)) + '</strong></div>' +
+                '</div>' +
+              '</section>' +
+              '<section class="card">' +
+                '<div class="summary-head">' +
+                  '<div><p class="meta-label">Attempt summary</p><h2 class="summary-title">Question review</h2></div>' +
+                  '<button class="btn-primary" data-action="restart">Restart quiz</button>' +
+                '</div>' +
+                '<div class="summary-list">' +
+                  attempts
+                    .map(({ question, row }, index) => {
+                      const grade = row.grade || { summary: 'manual', score: 0 };
+                      return '<article class="summary-item">' +
+                        '<div class="summary-head">' +
+                          '<div><strong>Question ' + escapeHtml(String(index + 1)) + '</strong><p class="subtle">' + escapeHtml(question.prompt) + '</p></div>' +
+                          '<span class="status-pill ' + escapeHtml(grade.summary) + '">' + escapeHtml(summaryLabel(grade)) + '</span>' +
+                        '</div>' +
+                        '<p><strong>Your response:</strong> ' + escapeHtml(playerResponse(question, row.attempt)) + '</p>' +
+                        '<p><strong>Answer:</strong> ' + escapeHtml(canonicalAnswer(question)) + '</p>' +
+                        '<p><strong>Score:</strong> ' + escapeHtml(String(grade.score || 0)) + ' / ' + escapeHtml(String(question.points)) + '</p>' +
+                        (question.funFact ? '<p><strong>Fun fact:</strong> ' + escapeHtml(question.funFact) + '</p>' : '') +
+                      '</article>';
+                    })
+                    .join('') +
+                '</div>' +
+              '</section>' +
+              '<div class="footer-note">' +
+                '<span>Exported ' + escapeHtml(formatDate(exportedAt)) + '</span>' +
+                '<span>TriviaCraft static HTML package</span>' +
+              '</div>' +
+            '</main>';
+
+          const restartButton = app.querySelector('[data-action="restart"]');
+          if (restartButton) {
+            restartButton.addEventListener('click', () => {
+              state.index = 0;
+              state.finished = false;
+              state.attempts = {};
+              render();
+            });
+          }
+        }
+
+        function render() {
+          if (state.finished) {
+            renderSummary();
+            return;
+          }
+          renderQuestion();
+        }
+
+        render();
+      })();
+    </script>
+  </body>
+</html>
