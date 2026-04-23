@@ -1,0 +1,1 @@
+# triviacraft-static
